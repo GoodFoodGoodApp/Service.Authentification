@@ -1,6 +1,9 @@
 using System.Text;
 using API.Endpoints;
+using Infrastructure;
+using Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Service;
@@ -8,7 +11,12 @@ using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//TODO placer en middleware builder / builderExtensions
+#region ConfigureBuilderApplication
+
+// Add services to the container.
+builder.Services.AddInfrastructure(builder.Environment);
+builder.Services.AddIdentityApiEndpoints<IdentityUser>()
+    .AddEntityFrameworkStores<DataContext>();
 
 builder.Services.AddService();
 
@@ -32,80 +40,26 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        var token = builder.Configuration.GetSection("AppSettings:Token").Value;
-        if (string.IsNullOrEmpty(token))
-        {
-            throw new InvalidOperationException("Token is not configured properly in AppSettings.");
-        }
-
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(token)),
-            ValidateIssuer = false,
-            ValidateAudience = false
-        };
-    });
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", configurePolicy: builder =>
-    {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
-    });
-});
-
 var app = builder.Build();
+#endregion ConfigureBuilderApplication
 
-// Configure the HTTP request pipeline.
+#region ConfigureApplication
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-#region App running
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
-
-app.UseCors("AllowAll");
-
-app.UseAuthentication();
 
 app.UseAuthorization();
 
+//Register endpoints
 app.MapAuthEndpoints();
 
+#endregion ConfigureApplication
 
 app.Run();
-#endregion App running
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
