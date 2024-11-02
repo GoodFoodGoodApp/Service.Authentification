@@ -19,7 +19,8 @@ public static class DependencyInjection
         if (hostEnvironment.IsDevelopment())
         {
             // Ensure database is created and all migrations are applied
-            context.Database.EnsureDeleted();   // Optional: Clear existing database
+            //            context.Database.EnsureDeleted();
+            // Optional: Clear existing database
             context.Database.EnsureCreated();
         }
         else
