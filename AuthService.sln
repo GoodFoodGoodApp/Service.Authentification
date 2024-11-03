@@ -7,7 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{BC58B975-F61
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "API", "src\API\API.csproj", "{5B951015-1176-494D-B1E9-AAF07737A905}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Service", "src\Service\Service.csproj", "{9401FE4A-80D0-4E65-AB6D-A9345EEB94D6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "src\Service\Application.csproj", "{9401FE4A-80D0-4E65-AB6D-A9345EEB94D6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", "src\Infrastructure\Infrastructure.csproj", "{2E6AFDB4-581F-45D8-AC67-666F3697C7DF}"
 EndProject
