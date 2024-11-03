@@ -1,5 +1,6 @@
 namespace Infrastructure;
 
+using Application.User;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,12 @@ public static class DependencyInjection
 
         _ = services.AddDbContext<DataContext>(options => options.UseSqlite("Data Source=../Infrastructure/data/app.db"));
 
+        _ = services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+        _ = services.AddScoped<IdentityRepository>();
+
+        _ = services.AddScoped<IUserRepository>(p => p.GetRequiredService<IdentityRepository>());
+
         // Build the service provider to get the DataContext
         var serviceProvider = services.BuildServiceProvider();
         var context = serviceProvider.GetService<DataContext>();
@@ -19,7 +26,7 @@ public static class DependencyInjection
         if (hostEnvironment.IsDevelopment())
         {
             // Ensure database is created and all migrations are applied
-            //            context.Database.EnsureDeleted();
+            context.Database.EnsureDeleted();
             // Optional: Clear existing database
             context.Database.EnsureCreated();
         }
@@ -35,6 +42,12 @@ public static class DependencyInjection
             }
 
         }
+
+
+        // Seed data
+        //var userManager = serviceProvider.GetService<UserManager<User>>();
+        //context.SeedDataAsync(userManager).Wait();
+
         return services;
     }
 }
