@@ -1,11 +1,12 @@
-namespace Service.User;
+namespace Application.User;
 using System.Threading.Tasks;
+using Application.User.Entities;
 
 public interface IUserService
 {
-    //TODO cancellation Token ?
-    //Task<IResult> Register(LoginRequest loginRequest);
 
     Task<string> GetName();
+
+    Task<UserProfile> GetUserProfile();
 
 }

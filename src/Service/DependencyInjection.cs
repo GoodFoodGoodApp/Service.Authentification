@@ -1,8 +1,8 @@
 namespace Service;
 
 using Microsoft.Extensions.DependencyInjection;
-using Service.User;
-using Service.User.Service;
+using Application.User;
+using Application.User.Service;
 
 public static class DependencyInjection
 {
