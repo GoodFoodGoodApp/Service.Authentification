@@ -43,11 +43,6 @@ public static class DependencyInjection
 
         }
 
-
-        // Seed data
-        //var userManager = serviceProvider.GetService<UserManager<User>>();
-        //context.SeedDataAsync(userManager).Wait();
-
         return services;
     }
 }
