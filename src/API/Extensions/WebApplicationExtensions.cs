@@ -1,10 +1,12 @@
 namespace API.Extensions;
 
+using System.Security.Claims;
 using API.Endpoints;
 using Infrastructure.Data;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
 using Serilog;
+using Permissions = Permissions.Permissions;
 
 public static class WebApplicationExtensions
 {
@@ -45,21 +47,27 @@ public static class WebApplicationExtensions
         #endregion
 
         #region SeedingData
-        using (var scope = app.Services.CreateScope())
+        if (app.Environment.IsDevelopment())
         {
-            var services = scope.ServiceProvider;
-            try
+            using (var scope = app.Services.CreateScope())
             {
-                var context = services.GetRequiredService<DataContext>();
-                var roleManager = services.GetRequiredService<RoleManager<Role>>();
-                var userManager = services.GetRequiredService<UserManager<User>>();
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var context = services.GetRequiredService<DataContext>();
+                    var roleManager = services.GetRequiredService<RoleManager<Role>>();
+                    var userManager = services.GetRequiredService<UserManager<User>>();
 
-                await SeedRolesAsync(roleManager);
-                await SeedAdminUserAsync(userManager);
-            }
-            catch (Exception ex)
-            {
-                Log.Logger.Error(ex, "An error occurred while seeding the database.");
+                    await SeedRolesAsync(roleManager);
+                    await SeedAdminUserAsync(userManager);
+                    await SeedClientUserAsync(userManager);
+                    await SeedDeliveryUserAsync(userManager);
+                    await SeedManagerUserAsync(userManager);
+                }
+                catch (Exception ex)
+                {
+                    Log.Logger.Error(ex, "An error occurred while seeding the database.");
+                }
             }
         }
         #endregion
@@ -70,11 +78,69 @@ public static class WebApplicationExtensions
     private static async Task SeedRolesAsync(RoleManager<Role> roleManager)
     {
         var roles = new[] { "admin", "manager", "delivery", "user" };
-        foreach (var role in roles)
+        foreach (var role in Permissions.AllRoles)
         {
-            if (!await roleManager.RoleExistsAsync(role))
             {
                 await roleManager.CreateAsync(new Role(role));
+
+                var roleResult = await roleManager.FindByNameAsync(role);
+
+                if (roleResult.Name == Permissions.AdminRole)
+                {
+                    foreach (var claim in Permissions.Admin.AllPermissions)
+                    {
+                        var roleClaim = new IdentityRoleClaim<Guid>
+                        {
+                            RoleId = roleResult.Id,
+                            ClaimType = "permission",
+                            ClaimValue = claim
+                        };
+
+                        await roleManager.AddClaimAsync(roleResult, new Claim(roleClaim.ClaimType, roleClaim.ClaimValue));
+                    }
+                }
+                if (roleResult.Name == Permissions.ManagerRole)
+                {
+                    foreach (var claim in Permissions.Manager.AllPermissions)
+                    {
+                        var roleClaim = new IdentityRoleClaim<Guid>
+                        {
+                            RoleId = roleResult.Id,
+                            ClaimType = "permission",
+                            ClaimValue = claim
+                        };
+
+                        await roleManager.AddClaimAsync(roleResult, new Claim(roleClaim.ClaimType, roleClaim.ClaimValue));
+                    }
+                }
+                if (roleResult.Name == Permissions.DeliveryRole)
+                {
+                    foreach (var claim in Permissions.Delivery.AllPermissions)
+                    {
+                        var roleClaim = new IdentityRoleClaim<Guid>
+                        {
+                            RoleId = roleResult.Id,
+                            ClaimType = "permission",
+                            ClaimValue = claim
+                        };
+
+                        await roleManager.AddClaimAsync(roleResult, new Claim(roleClaim.ClaimType, roleClaim.ClaimValue));
+                    }
+                }
+                if (roleResult.Name == Permissions.ClientRole)
+                {
+                    foreach (var claim in Permissions.Client.AllPermissions)
+                    {
+                        var roleClaim = new IdentityRoleClaim<Guid>
+                        {
+                            RoleId = roleResult.Id,
+                            ClaimType = "permission",
+                            ClaimValue = claim
+                        };
+
+                        await roleManager.AddClaimAsync(roleResult, new Claim(roleClaim.ClaimType, roleClaim.ClaimValue));
+                    }
+                }
             }
         }
     }
@@ -86,14 +152,70 @@ public static class WebApplicationExtensions
 
         if (await userManager.FindByEmailAsync(email) == null)
         {
-            var adminUser = new User
+            var user = new User
             {
                 UserName = email,
                 Email = email,
                 EmailConfirmed = true
             };
-            await userManager.CreateAsync(adminUser, password);
-            await userManager.AddToRoleAsync(adminUser, "admin");
+            await userManager.CreateAsync(user, password);
+            await userManager.AddToRoleAsync(user, Permissions.AdminRole);
         }
     }
-}
+
+    private static async Task SeedClientUserAsync(UserManager<User> userManager)
+    {
+        var email = "client@gmail.com";
+        var password = "String1!";
+
+        if (await userManager.FindByEmailAsync(email) == null)
+        {
+            var user = new User
+            {
+                UserName = email,
+                Email = email,
+                EmailConfirmed = true
+            };
+            await userManager.CreateAsync(user, password);
+            await userManager.AddToRoleAsync(user, Permissions.ClientRole);
+        }
+    }
+
+    private static async Task SeedManagerUserAsync(UserManager<User> userManager)
+    {
+        var email = "manager@gmail.com";
+        var password = "String1!";
+
+        if (await userManager.FindByEmailAsync(email) == null)
+        {
+            var user = new User
+            {
+                UserName = email,
+                Email = email,
+                EmailConfirmed = true
+            };
+            await userManager.CreateAsync(user, password);
+            await userManager.AddToRoleAsync(user, Permissions.ManagerRole);
+        }
+    }
+
+    private static async Task SeedDeliveryUserAsync(UserManager<User> userManager)
+    {
+        var email = "delivery@gmail.com";
+        var password = "String1!";
+
+        if (await userManager.FindByEmailAsync(email) == null)
+        {
+            var user = new User
+            {
+                UserName = email,
+                Email = email,
+                EmailConfirmed = true
+            };
+            await userManager.CreateAsync(user, password);
+            await userManager.AddToRoleAsync(user, Permissions.DeliveryRole);
+        }
+    }
+
+
+}   

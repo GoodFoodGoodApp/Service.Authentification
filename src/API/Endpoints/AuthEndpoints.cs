@@ -1,8 +1,6 @@
 namespace API.Endpoints;
 
-using Application.User;
 using Infrastructure.Models;
-//using Service.User.DTO = Dto ;
 
 public static class AuthEndpoints
 {

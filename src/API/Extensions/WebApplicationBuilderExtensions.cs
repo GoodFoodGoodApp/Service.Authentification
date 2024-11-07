@@ -13,6 +13,8 @@ using Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 [ExcludeFromCodeCoverage]
 public static class WebApplicationBuilderExtensions
@@ -88,14 +90,35 @@ public static class WebApplicationBuilderExtensions
             .AddRoleManager<RoleManager<Role>>()
             .AddUserManager<UserManager<User>>()
             .AddSignInManager<SignInManager<User>>()
-            .AddTokenProvider<DataProtectorTokenProvider<User>>(IdentityConstants.BearerScheme);
+            .AddTokenProvider<AuthenticatorTokenProvider<User>>(IdentityConstants.BearerScheme);
 
         #endregion
 
         #region ConfigureAuthentication
-        _ = builder.Services.AddAuthentication();
+        _ = builder.Services
+            .AddAuthentication()
+            .AddJwtBearer(options =>
+            {
+                options.SaveToken = true;
+                options.RequireHttpsMetadata = false;
+                options.TokenValidationParameters = new()
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+                    ClockSkew = TimeSpan.Zero,
+                };
+            });
+
+        // check this issue to remodel JWT 
         _ = builder.Services.AddAuthorization();
+
         #endregion
+
         return builder;
     }
 }
