@@ -9,4 +9,6 @@ public interface IUserService
 
     Task<UserProfile> GetUserProfile();
 
+    Task UpdateUserProfile(UserProfile profile);
+
 }
