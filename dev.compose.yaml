@@ -62,8 +62,6 @@ services:
     networks:
       - localnet
 
-
-
 networks:
   localnet:
     name: localnet
